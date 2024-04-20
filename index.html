@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule Calendar App</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+  .calendar {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .month-header {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  .day {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+    cursor: pointer;
+  }
+  .selected-day {
+    background-color: #f2f2f2;
+  }
+  .schedule-input {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+  }
+  .schedule-button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+  .load-button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="calendar">
+  <div class="month-header"></div>
+  <div class="days">
+    <div class="day">日</div>
+    <div class="day">月</div>
+    <div class="day">火</div>
+    <div class="day">水</div>
+    <div class="day">木</div>
+    <div class="day">金</div>
+    <div class="day">土</div>
+  </div>
+  <input type="text" class="schedule-input" placeholder="スケジュールを入力してください">
+  <button class="schedule-button" onclick="saveSchedule()">スケジュール登録</button>
+  <button class="load-button" onclick="loadSchedule()">読込</button>
+</div>
+
+<script>
+  const calendar = document.querySelector('.calendar');
+  const monthHeader = calendar.querySelector('.month-header');
+  const daysContainer = calendar.querySelector('.days');
+  const scheduleInput = calendar.querySelector('.schedule-input');
+
+  function renderCalendar(year, month) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+    monthHeader.textContent = `${year}年 ${month + 1}月`;
+
+    daysContainer.innerHTML = '';
+
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+
+    for (let i = 0; i < 7; i++) {
+      const weekday = document.createElement('div');
+      weekday.textContent = weekdays[i];
+      weekday.classList.add('day');
+      daysContainer.appendChild(weekday);
+    }
+
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      const emptyDay = document.createElement('div');
+      daysContainer.appendChild(emptyDay);
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const day = document.createElement('div');
+      day.textContent = i;
+      day.classList.add('day');
+      day.addEventListener('click', () => {
+        const selectedDay = calendar.querySelector('.selected-day');
+        if (selectedDay) {
+          selectedDay.classList.remove('selected-day');
+        }
+        day.classList.add('selected-day');
+        scheduleInput.style.display = 'block';
+      });
+      daysContainer.appendChild(day);
+    }
+  }
+
+  function saveSchedule() {
+    const selectedDay = calendar.querySelector('.selected-day');
+    if (!selectedDay) {
+      alert('日付を選択してください。');
+      return;
+    }
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth() + 1;
+    const day = parseInt(selectedDay.textContent);
+    const schedule = scheduleInput.value.trim();
+    if (schedule === '') {
+      alert('スケジュールを入力してください。');
+      return;
+    }
+    const scheduleData = {
+      year: year,
+      month: month,
+      day: day,
+      schedule: schedule
+    };
+    // クッキーの名前を動的に生成して保存
+    const cookieName = `schedule_${year}_${month}_${day}`;
+    document.cookie = `${cookieName}=${JSON.stringify(scheduleData)}; path=/`;
+
+    console.log(cookieName); 
+    console.log(scheduleData); 
+    console.log(document.cookie); 
+
+    alert('スケジュールが登録されました。');
+    scheduleInput.value = '';
+    selectedDay.style.backgroundColor = '#ddd';
+  }
+
+  function loadSchedule() {
+    const selectedDay = calendar.querySelector('.selected-day');
+    if (!selectedDay) {
+      alert('日付を選択してください。');
+      return;
+    }
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth() + 1;
+    const day = parseInt(selectedDay.textContent);
+
+    const scheduleData = getScheduleFromCookie(year, month, day);
+    if (scheduleData) {
+      scheduleInput.value = scheduleData.schedule;
+    } else {
+      alert('スケジュールが見つかりませんでした。');
+      scheduleInput.value = '';
+    }
+  }
+
+  function getScheduleFromCookie(year, month, day) {
+    const cookieName = `schedule_${year}_${month}_${day}`;
+    const cookieValue = getCookie(cookieName);
+    if (cookieValue) {
+      return JSON.parse(cookieValue);
+    }
+    return null;
+  }
+
+  function getCookie(name) {
+    const cookieArray = document.cookie.split('; ');
+    for (let i = 0; i < cookieArray.length; i++) {
+      const cookiePair = cookieArray[i].split('=');
+      if (name === cookiePair[0]) {
+        return decodeURIComponent(cookiePair[1]);
+      }
+    }
+    return null;
+  }
+
+  const currentDate = new Date();
+  renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+
+</script>
+
+</body>
+</html>
